@@ -25,7 +25,7 @@ app.configure(function() {
 });
 
 var authSession = function(req, res, next){
-  if(req.session.username){
+  if(req.session.userId){
     next();
   } else {
     req.session.error = 'ACCESS DENIED!!';
@@ -42,7 +42,7 @@ app.get('/create', authSession, function(req, res) {
 });
 
 app.get('/links', authSession, function(req, res) {
-  Links.reset().fetch().then(function(links) {
+  Links.reset().query('where', 'user_id', '=', req.session.userId).fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
@@ -68,7 +68,8 @@ app.post('/links', authSession, function(req, res) {
         var link = new Link({
           url: uri,
           title: title,
-          base_url: req.headers.origin
+          base_url: req.headers.origin,
+          user_id: req.session.userId
         });
 
         link.save().then(function(newLink) {
@@ -119,7 +120,7 @@ app.post('/login', function(req, res){
     user.comparePassword(password).then(function(isSame) {
       if (isSame) {
         req.session.regenerate(function(){
-          req.session.username = username;
+          req.session.userId = user.id;
           res.redirect('/');
         });
       } else {

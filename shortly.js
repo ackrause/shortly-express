@@ -9,31 +9,45 @@ var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 
+var cookieParser = require('cookie-parser');
+var session      = require('express-session');
+
 var app = express();
 
 app.configure(function() {
   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
   app.use(partials());
-  app.use(express.bodyParser())
+  app.use(express.bodyParser());
   app.use(express.static(__dirname + '/public'));
+  app.use(cookieParser());
+  app.use(session({secret: 'much secret So hush hush WOW', cookie: { maxAge: 600000 }}));
 });
 
-app.get('/', function(req, res) {
+var authSession = function(req, res, next){
+  if(req.session.username){
+    next();
+  } else {
+    req.session.error = 'ACCESS DENIED!!';
+    res.redirect('/login');
+  }
+};
+
+app.get('/', authSession, function(req, res) {
   res.render('index');
 });
 
-app.get('/create', function(req, res) {
+app.get('/create', authSession, function(req, res) {
   res.render('index');
 });
 
-app.get('/links', function(req, res) {
+app.get('/links', authSession, function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', function(req, res) {
+app.post('/links', authSession, function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -79,8 +93,9 @@ app.get('/login', function(req, res) {
 });
 
 app.get('/logout', function(req, res) {
-  // destroy sessions
-  // redirect to login
+  req.session.destroy(function(){
+    res.redirect('/login');
+  });
 });
 
 app.post('/signup', function(req, res){
@@ -103,7 +118,10 @@ app.post('/login', function(req, res){
   new User({username: username}).fetch().then(function(user) {
     user.comparePassword(password).then(function(isSame) {
       if (isSame) {
-        res.redirect('/');
+        req.session.regenerate(function(){
+          req.session.username = username;
+          res.redirect('/');
+        });
       } else {
         res.redirect('/login');
       }

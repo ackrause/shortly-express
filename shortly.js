@@ -30,7 +30,7 @@ app.get('/create', function(req, res) {
 app.get('/links', function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
-  })
+  });
 });
 
 app.post('/links', function(req, res) {
@@ -70,7 +70,41 @@ app.post('/links', function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/signup', function(req, res) {
+  res.render('signup');
+});
 
+app.get('/login', function(req, res) {
+  res.render('login');
+});
+
+app.get('/logout', function(req, res) {
+  // destroy sessions
+  // redirect to login
+});
+
+app.post('/signup', function(req, res){
+  var username = req.param('username');
+  var password = req.param('password');
+
+  var user = new User({username: username, password: password});
+
+  console.log(user);
+
+  user.save().then(function(newUser){
+    res.redirect('/login');
+  }).catch(function(err) {
+    res.redirect('/signup');
+    console.log(err);
+  });
+});
+
+app.post('/login', function(req, res){
+  // get name and password
+  // compare
+  // if success redirect to index
+  // else redirect to login
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail

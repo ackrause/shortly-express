@@ -14,8 +14,18 @@ var User = db.Model.extend({
     bcrypt.hash(this.get('password'), null, null, function(err, hash){
       if (err){ console.log('ERROR', err); }
       self.set('password', hash);
-      console.log(self, hash);
     });
+  },
+  comparePassword: function(password) {
+    var resolver = Promise.pending();
+    bcrypt.compare(password, this.get('password'), function(err, isSame) {
+      if (err) {
+        resolver.reject(err);
+      } else {
+        resolver.resolve(isSame);
+      }
+    });
+    return resolver.promise;
   }
 });
 

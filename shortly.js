@@ -89,21 +89,26 @@ app.post('/signup', function(req, res){
 
   var user = new User({username: username, password: password});
 
-  console.log(user);
-
   user.save().then(function(newUser){
     res.redirect('/login');
   }).catch(function(err) {
     res.redirect('/signup');
-    console.log(err);
   });
 });
 
 app.post('/login', function(req, res){
-  // get name and password
-  // compare
-  // if success redirect to index
-  // else redirect to login
+  var username = req.param('username');
+  var password = req.param('password');
+
+  new User({username: username}).fetch().then(function(user) {
+    user.comparePassword(password).then(function(isSame) {
+      if (isSame) {
+        res.redirect('/');
+      } else {
+        res.redirect('/login');
+      }
+    });
+  });
 });
 
 /************************************************************/
